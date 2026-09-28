@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mama Martina y Antonito</title>
+<meta name="description" content="Relatos, historias y ensueños de Mama Martina y Antonito, de Freddy Córdova Ossio. Lee el libro, conoce a sus personajes, recorre Potosí y construye el árbol de la familia.">
+<meta property="og:title" content="Mama Martina y Antonito">
+<meta property="og:description" content="Un libro, una familia y la memoria de Potosí.">
+<meta property="og:image" content="img/libro/portada.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 L29 27 H3 Z' fill='%239c4428'/%3E%3Cpath d='M16 10 L22 22 H10 Z' fill='%23f6f0e4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600;700&family=Literata:opsz,wght@7..72,400;7..72,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+<div class="progreso" id="progreso"></div>
+<header class="cabecera">
+  <div class="contenedor">
+    <a class="marca" href="#/">
+      <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 L29 27 H3 Z" fill="currentColor"/><path d="M16 11 L21.5 22 H10.5 Z" fill="var(--papel)"/></svg>
+      <span>Mama Martina</span>
+    </a>
+    <nav class="nav" id="nav">
+      <a href="#/" data-r="inicio" data-t="nav.inicio">Inicio</a>
+      <a href="#/leer" data-r="leer" data-t="nav.leer">Leer el libro</a>
+      <a href="#/autor" data-r="autor" data-t="nav.autor">El autor</a>
+      <a href="#/personajes" data-r="personajes" data-t="nav.personajes">Personajes</a>
+      <a href="#/arbol" data-r="arbol" data-t="nav.arbol">Árbol familiar</a>
+      <a href="#/potosi" data-r="potosi" data-t="nav.potosi">Potosí y lugares</a>
+    </nav>
+    <div class="herr">
+      <div class="idioma" role="group" aria-label="Idioma">
+        <button data-lang="es" aria-pressed="true">ES</button>
+        <button data-lang="nl" aria-pressed="false">NL</button>
+        <button data-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <button class="icono-btn" id="tema" aria-label="Cambiar tema" title="Tema claro/oscuro">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+      <button class="icono-btn menu-btn" id="menu" aria-label="Menú">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="app"><div class="cargando">…</div></main>
+
+<footer class="pie">
+  <div class="contenedor">
+    <div><strong style="font-family:var(--serif);font-size:1.1rem;color:var(--tinta)">Relatos, historias y ensueños de Mama Martina y Antonito</strong><br>© Freddy Córdova Ossio · <span data-t="pie.familia">Un proyecto de su familia</span></div>
+    <div data-t="pie.frase" style="font-style:italic;font-family:var(--serif);font-size:1.1rem">«Yo soy porque ellos fueron, y seré mientras los recuerde.»</div>
+  </div>
+</footer>
+
+<div class="visor" id="visor"><img alt=""></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" defer></script>
+<script src="js/i18n.js" defer></script>
+<script src="js/arbol.js" defer></script>
+<script src="js/app.js" defer></script>
+</body>
+</html>
