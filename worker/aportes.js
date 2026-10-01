@@ -17,18 +17,23 @@ const MAX_TEXTO = 8000;           // caracteres por campo de texto largo
 
 export default {
   async fetch(req, env) {
+    // Origen permitido: se normaliza (minúsculas, sin «/» final ni carpeta) para evitar errores de tipeo
+    const normal = u => { try { return new URL(String(u).trim()).origin.toLowerCase(); } catch { return ''; } };
+    const permitido = normal(env.ORIGEN_PERMITIDO || '');
+    const origen = normal(req.headers.get('Origin') || '');
+    const origenOk = !permitido || origen === permitido;
     const cors = {
-      'Access-Control-Allow-Origin': env.ORIGEN_PERMITIDO || '*',
+      'Access-Control-Allow-Origin': req.headers.get('Origin') || '*',   // así el formulario puede mostrar el error real
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Max-Age': '86400'
+      'Access-Control-Max-Age': '86400',
+      'Vary': 'Origin'
     };
-    const responder = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
+    const responder = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: { ...cors, 'Content-Type': 'application/json; charset=utf-8' } });
 
     if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
     if (req.method !== 'POST') return responder({ ok: false, error: 'Método no permitido' }, 405);
-    const origen = req.headers.get('Origin') || '';
-    if (env.ORIGEN_PERMITIDO && origen !== env.ORIGEN_PERMITIDO) return responder({ ok: false, error: 'Origen no permitido' }, 403);
+    if (!origenOk) return responder({ ok: false, error: `Origen no permitido (${origen || 'desconocido'}). Revisa ORIGEN_PERMITIDO en Cloudflare.` }, 403);
 
     let a;
     try { a = await req.json(); } catch { return responder({ ok: false, error: 'Datos inválidos' }, 400); }
