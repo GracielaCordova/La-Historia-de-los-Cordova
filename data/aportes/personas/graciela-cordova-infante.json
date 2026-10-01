@@ -1,0 +1,26 @@
+{
+  "id": "graciela-cordova-infante",
+  "tipo": "persona",
+  "nombre": "Graciela Cordova Infante",
+  "apodo": "Chelita",
+  "nacimiento": "1999",
+  "fallecimiento": "",
+  "lugar": "",
+  "padres": [
+    "freddy-boris-cordova-pozo"
+  ],
+  "pareja": [],
+  "rol": {
+    "es": "Hija de Boris"
+  },
+  "bio": {},
+  "vive": true,
+  "seccion": "hoy",
+  "fuente": "familia",
+  "aportado_por": {
+    "nombre": "Chelita",
+    "relacion": "Nieta de Freddy"
+  },
+  "fecha": "2026-10-01T19:29:47.646Z",
+  "foto": "img/aportes/graciela-cordova-infante.jpg"
+}
