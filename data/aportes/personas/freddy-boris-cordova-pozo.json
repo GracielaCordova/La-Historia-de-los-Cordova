@@ -1,0 +1,27 @@
+{
+  "id": "freddy-boris-cordova-pozo",
+  "tipo": "persona",
+  "seccion": "hoy",
+  "fuente": "familia",
+  "nombre": "Freddy Boris Cordova Pozo",
+  "apodo": "Boris",
+  "nacimiento": "1972",
+  "fallecimiento": "",
+  "lugar": "Cochabamba, Bolivia",
+  "padres": [
+    "freddy"
+  ],
+  "pareja": [],
+  "rol": {
+    "es": "Hijo de Freddy Cordova Ossio"
+  },
+  "bio": {},
+  "vive": true,
+  "editado_por": [
+    {
+      "nombre": "Chelita",
+      "relacion": "Nieta de Freddy",
+      "fecha": "2026-10-01T19:24:43.755Z"
+    }
+  ]
+}
