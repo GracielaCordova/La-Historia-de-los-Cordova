@@ -1,0 +1,11 @@
+# Configuración del buzón de aportes para Cloudflare Workers.
+# Si lo creas desde el panel web de Cloudflare no necesitas este archivo (ver LEEME.md).
+name = "buzon-mama-martina"
+main = "aportes.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+REPOSITORIO = "TU-USUARIO/TU-REPOSITORIO"
+ORIGEN_PERMITIDO = "https://TU-USUARIO.github.io"
+# GITHUB_TOKEN y TURNSTILE_SECRET se guardan como secretos:
+#   npx wrangler secret put GITHUB_TOKEN
