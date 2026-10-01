@@ -2,16 +2,15 @@
    CONFIGURACIÓN DEL SITIO — edita solo este archivo
    ========================================================= */
 window.CONFIG = {
-  // Dirección del «buzón» de aportes (Cloudflare Worker). Ver worker/LEEME.md.
-  // Mientras esté vacío, el formulario permite descargar el aporte y enviarlo por WhatsApp o correo.
-  endpointAportes: "",
+  // Buzón de aportes (Cloudflare Worker)
+  endpointAportes: "https://buzon-mama-martina.gracielacordova80.workers.dev/",
 
-  // Clave pública de Cloudflare Turnstile (antispam, opcional). Déjalo vacío para no usarlo.
+  // Antispam opcional (vacío = no se usa)
   turnstileSiteKey: "",
 
-  // Repositorio de GitHub, en formato "usuario/repositorio". Se usa para el enlace de «Administración».
-  repositorio: "",
+  // Repositorio, para el enlace de «Administración»
+  repositorio: "GracielaCordova/La-Historia-de-los-Cordova",
 
-  // Correo o WhatsApp para pedir cambios o que se retire información (aparece en Privacidad).
-  contacto: ""
+  // Correo o WhatsApp para pedir cambios o retirar información
+  contacto: "WhatsApp +591 69537363"
 };
