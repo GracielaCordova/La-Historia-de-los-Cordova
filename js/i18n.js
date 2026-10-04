@@ -414,3 +414,6 @@ Object.assign(window.I18N.en, {
   "form.nota2": "Changes show instantly in your browser and go live for everyone once approved.",
   "toast.enviado": "Sent for approval", "toast.guardado": "Saved in this browser", "toast.sincambios": "No changes"
 });
+Object.assign(window.I18N.es, { "arbol.ley.local": "Guardado solo en este navegador, aún sin enviar" });
+Object.assign(window.I18N.nl, { "arbol.ley.local": "Alleen in deze browser opgeslagen, nog niet verstuurd" });
+Object.assign(window.I18N.en, { "arbol.ley.local": "Saved only in this browser, not sent yet" });

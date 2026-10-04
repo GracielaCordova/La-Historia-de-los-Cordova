@@ -34,7 +34,7 @@ window.PaginaArbol = async function (el, [arg]) {
     const m = new Map(base.personas.map(p => [p.id, { ...p, _sec: 'libro', _estado: 'libro' }]));
     for (const p of ap.personas) if (!m.has(p.id)) m.set(p.id, { ...p, _sec: 'hoy', _estado: 'aprobado' });
     for (const x of App.pendientes()) {
-      if (x.tipo === 'persona' && !m.has(x.id)) m.set(x.id, { id: x.id, ...x.datos, foto: x.miniatura, _sec: 'hoy', _estado: 'pendiente', aportado_por: x.autor, _uid: x.uid });
+      if (x.tipo === 'persona' && !m.has(x.id)) m.set(x.id, { id: x.id, ...x.datos, foto: x.miniatura, _sec: 'hoy', _estado: x.pr === null ? 'local' : 'pendiente', aportado_por: x.autor, _uid: x.uid });
       if (x.tipo === 'editar' && m.has(x.objetivo)) {
         const p = m.get(x.objetivo);
         for (const [k, v] of Object.entries(x.datos)) {
@@ -42,7 +42,7 @@ window.PaginaArbol = async function (el, [arg]) {
           p[k] = (k === 'rol' || k === 'bio') && typeof v === 'object' ? { ...(typeof p[k] === 'object' ? p[k] : {}), ...v } : v;
         }
         if (x.miniatura) p.foto = x.miniatura;
-        p._editado = true;
+        p._editado = true; if (x.pr === null) p._local = true;
       }
     }
     return m;
@@ -56,7 +56,7 @@ window.PaginaArbol = async function (el, [arg]) {
   /* ---------- Tarjeta ---------- */
   function tarjeta(p) {
     const hoy = p._sec === 'hoy';
-    const cls = ['persona', p.por_confirmar ? 'pendiente' : '', hoy ? 'de-hoy' : '', (p._estado === 'pendiente' || p._editado) ? 'enviado' : ''].join(' ');
+    const cls = ['persona', p.por_confirmar ? 'pendiente' : '', hoy ? 'de-hoy' : '', (p._estado === 'pendiente' || p._estado === 'local' || p._editado) ? 'enviado' : ''].join(' ');
     const extra = [];
     const adoptivos = [...P.values()].filter(x => (x.adopta || []).includes(p.id));
     if (adoptivos.length) extra.push(`${t('arbol.adopcion')} <a data-ver="${adoptivos[0].id}">${esc(adoptivos[0].nombre)}</a>`);
@@ -64,7 +64,9 @@ window.PaginaArbol = async function (el, [arg]) {
     const f = p.foto || '';
     const av = f ? `<span class="avatar"><img src="${esc(f)}" alt=""></span>` : `<span class="avatar" style="background:${App.color(p.id)}">${esc(App.iniciales(p.nombre))}</span>`;
     const fechas = [p.nacimiento, p.fallecimiento].filter(Boolean).join(' – ');
-    const marca = (p._estado === 'pendiente' || p._editado) ? `<span class="marca-conf" title="${esc(t(p._editado ? 'arbol.editado' : 'arbol.ley.pend'))}">⏳</span>`
+    const local = p._estado === 'local' || p._local;
+    const marca = local ? `<span class="marca-conf" title="${esc(t('arbol.ley.local'))}">💾</span>`
+      : (p._estado === 'pendiente' || p._editado) ? `<span class="marca-conf" title="${esc(t(p._editado ? 'arbol.editado' : 'arbol.ley.pend'))}">⏳</span>`
       : p.por_confirmar ? `<span class="marca-conf" title="${esc(t('arbol.ley.conf'))}">?</span>` : '';
     return `<div class="${cls}" tabindex="0" role="button" data-id="${esc(p.id)}">
       ${marca}${hoy ? '<span class="marca-hoy">🌱</span>' : ''}${av}<b>${esc(p.nombre)}</b>
@@ -108,7 +110,8 @@ window.PaginaArbol = async function (el, [arg]) {
     $('#intro-tab', el).textContent = pestaña === 'libro' ? t('arbol.p.libro2') : t('arbol.hoy.p');
     $('.leyenda-arbol', el).innerHTML = `<span><i></i>${t('arbol.ley.libro')}</span>`
       + (pestaña === 'hoy' ? `<span><i class="hoy-i"></i>🌱 ${t('arbol.ley.hoy')}</span>` : '')
-      + `<span><i style="border-style:dashed"></i>? ${t('arbol.ley.conf')}</span><span><i style="border:1px dashed var(--oro)"></i>⏳ ${t('arbol.ley.pend')}</span>`;
+      + `<span><i style="border-style:dashed"></i>? ${t('arbol.ley.conf')}</span><span><i style="border:1px dashed var(--oro)"></i>⏳ ${t('arbol.ley.pend')}</span>`
+      + (Aportes.sinEnviar().length ? `<span>💾 ${t('arbol.ley.local')}</span>` : '');
     $$('.persona[data-id]', el).forEach(c => {
       c.addEventListener('click', e => { if (e.target.closest('[data-ver]')) return; abrir(c.dataset.id); });
       c.addEventListener('keydown', e => { if (e.key === 'Enter') abrir(c.dataset.id); });
@@ -135,7 +138,7 @@ window.PaginaArbol = async function (el, [arg]) {
       ...App.pendientes().filter(x => x.tipo === 'recuerdo' && x.datos.persona === id).map(x => ({ ...x.datos, aportado_por: x.autor, _pend: true }))
     ];
     const fotos = ap.fotos.filter(f => (f.personas || []).includes(id));
-    const estado = { libro: t('arbol.p.libro'), aprobado: t('arbol.p.fam'), pendiente: t('arbol.ley.pend') }[p._estado];
+    const estado = p._local ? t('arbol.ley.local') : { libro: t('arbol.p.libro'), aprobado: t('arbol.p.fam'), pendiente: t('arbol.ley.pend'), local: t('arbol.ley.local') }[p._estado];
     const panel = $('#panel');
     panel.innerHTML = `
       <button class="icono-btn cerrar" aria-label="${t('gen.cerrar')}">✕</button>
@@ -252,7 +255,13 @@ window.PaginaArbol = async function (el, [arg]) {
         const l = App.pendientes(); const x = l.find(y => y.uid === p._uid);
         if (x) {
           x.datos = { ...x.datos, ...nuevos }; if (miniatura) x.miniatura = miniatura;
-          if (x.payload) { x.payload.datos = { ...x.payload.datos, ...nuevos }; if (foto) x.payload.foto = foto; Aportes._guardar(l); dlg.close(); dibujar(); abrir(editar); App.toast(t('toast.guardado')); return; }
+          if (x.payload) {
+            // Aún no se había enviado: se actualiza y, si el buzón está activo, se envía ahora
+            x.payload.datos = { ...x.payload.datos, ...nuevos }; if (foto) x.payload.foto = foto; Aportes._guardar(l);
+            dlg.close();
+            if (window.CONFIG?.endpointAportes) { await enviarPendientes(); } else App.toast(t('toast.guardado'));
+            dibujar(); abrir(editar); return;
+          }
           Aportes._guardar(l);
         }
         payload = { tipo: 'editar', seccion: 'hoy', objetivo: editar, datos: nuevos, foto, autor, consentimiento: true };
@@ -343,4 +352,11 @@ window.PaginaArbol = async function (el, [arg]) {
   dibujar();
   requestAnimationFrame(centrar);
   if (sel) abrir(sel);
+  // Si hay cosas guardadas sin enviar y el buzón ya está activo, se envían solas
+  if (window.CONFIG?.endpointAportes && Aportes.sinEnviar().length) { await enviarPendientes(); dibujar(); }
+
+  async function enviarPendientes() {
+    try { const n = await Aportes.reenviar(); if (n) App.toast(t('toast.enviado')); }
+    catch (e) { App.toast(`${t('aportar.error')}: ${e.message}`); }
+  }
 };
