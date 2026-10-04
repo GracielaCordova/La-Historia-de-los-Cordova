@@ -53,14 +53,26 @@
         return { guardado: true };
       }
     },
-    sinEnviar() { return App.pendientes().filter(x => x.pr === null && x.payload); },
+    // Todo lo guardado en este navegador que aún no llegó al buzón
+    sinEnviar() { return App.pendientes().filter(x => x.pr === null || x.pr === undefined); },
+    // Reconstruye el envío de entradas antiguas que se guardaron sin él, y completa el autor
+    _payload(x) {
+      const yo = App.store.get('aportar-autor', { nombre: '', relacion: '' });
+      const p = x.payload ? { ...x.payload } : (x.tipo === 'editar'
+        ? { tipo: 'editar', seccion: x.seccion || 'hoy', objetivo: x.objetivo, datos: x.datos, foto: x.miniatura || null }
+        : { tipo: x.tipo, datos: x.tipo === 'persona' ? { id_sugerido: x.id, ...x.datos } : x.datos, foto: x.miniatura || null });
+      p.autor = { nombre: p.autor?.nombre || x.autor?.nombre || yo.nombre || '', relacion: p.autor?.relacion || x.autor?.relacion || yo.relacion || '' };
+      p.consentimiento = true;
+      if (p.foto && !/^data:image\//.test(p.foto)) p.foto = null;
+      return p;
+    },
     // Quita de este navegador lo que ya fue aprobado y publicado (deja de mostrarse con ⏳)
     limpiarAprobados(ap, familia) {
       const tx = v => (v && typeof v === 'object') ? Object.values(v)[0] || '' : (v ?? '');
       const igual = (a, b) => JSON.stringify(a ?? '') === JSON.stringify(b ?? '');
       const personas = new Map([...(familia?.personas || []), ...ap.personas].map(p => [p.id, p]));
       const publicado = x => {
-        if (x.pr === null) return false;                       // aún no enviado
+        if (x.pr == null) return false;                        // aún no enviado
         const d = x.datos || {};
         if (x.tipo === 'persona') return ap.personas.some(p => p.id === x.id || (p.nombre === d.nombre && igual(p.padres, d.padres)));
         if (x.tipo === 'editar') {
@@ -72,22 +84,35 @@
         if (x.tipo === 'lugar') return ap.lugares.some(l => l.nombre === d.nombre);
         return false;
       };
-      const l = App.pendientes(); const quedan = l.filter(x => !publicado(x));
-      if (quedan.length !== l.length) this._guardar(quedan);
+      const l = App.pendientes(); let cambio = false;
+      l.forEach(x => { if (!x.uid) { x.uid = Math.random().toString(36).slice(2, 9); cambio = true; } });   // entradas antiguas
+      const quedan = l.filter(x => !publicado(x));
+      if (cambio || quedan.length !== l.length) this._guardar(quedan);
     },
-    // Reintenta enviar todo lo guardado en este navegador
+    // Envía todo lo guardado en este navegador. No se detiene si uno falla:
+    // guarda el motivo en la entrada para mostrarlo y reintentar después.
     async reenviar() {
-      const l = App.pendientes(); let n = 0;
+      const l = App.pendientes(); let enviados = 0; const errores = [];
       for (const x of l) {
-        if (x.pr !== null || !x.payload) continue;
-        const r = await this.enviar(x.payload);
-        x.pr = r.pr; delete x.payload; n++;
+        if (x.pr !== null && x.pr !== undefined) continue;
+        const payload = this._payload(x);
+        if (!payload.autor.nombre) { x.error = 'sin-nombre'; errores.push(x); continue; }
+        try {
+          const r = await this.enviar(payload);
+          x.pr = r.pr; delete x.payload; delete x.error; enviados++;
+        } catch (e) {
+          if (e.sinBuzon) break;
+          x.error = e.message || String(e); x.payload = payload; errores.push(x);
+        }
         this._guardar(l);
       }
-      return n;
+      this._guardar(l);
+      return { enviados, errores };
     },
+    // Borra de este navegador lo que no se pudo enviar (por ejemplo, pruebas)
+    descartarSinEnviar() { this._guardar(App.pendientes().filter(x => x.pr !== null && x.pr !== undefined)); },
     descargarSinEnviar() {
-      const l = this.sinEnviar().map(x => ({ ...x.payload, fecha: x.enviado }));
+      const l = this.sinEnviar().map(x => ({ ...this._payload(x), fecha: x.enviado }));
       this.descargar(`aportes-mama-martina-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(l, null, 2));
     },
     descargar(nombre, contenido) {

@@ -34,7 +34,7 @@ window.PaginaArbol = async function (el, [arg]) {
     const m = new Map(base.personas.map(p => [p.id, { ...p, _sec: 'libro', _estado: 'libro' }]));
     for (const p of ap.personas) if (!m.has(p.id)) m.set(p.id, { ...p, _sec: 'hoy', _estado: 'aprobado' });
     for (const x of App.pendientes()) {
-      if (x.tipo === 'persona' && !m.has(x.id)) m.set(x.id, { id: x.id, ...x.datos, foto: x.miniatura, _sec: 'hoy', _estado: x.pr === null ? 'local' : 'pendiente', aportado_por: x.autor, _uid: x.uid });
+      if (x.tipo === 'persona' && !m.has(x.id)) m.set(x.id, { id: x.id, ...x.datos, foto: x.miniatura, _sec: 'hoy', _estado: x.pr == null ? 'local' : 'pendiente', aportado_por: x.autor, _uid: x.uid });
       if (x.tipo === 'editar' && m.has(x.objetivo)) {
         const p = m.get(x.objetivo);
         for (const [k, v] of Object.entries(x.datos)) {
@@ -42,7 +42,7 @@ window.PaginaArbol = async function (el, [arg]) {
           p[k] = (k === 'rol' || k === 'bio') && typeof v === 'object' ? { ...(typeof p[k] === 'object' ? p[k] : {}), ...v } : v;
         }
         if (x.miniatura) p.foto = x.miniatura;
-        p._editado = true; if (x.pr === null) p._local = true;
+        p._editado = true; if (x.pr == null) p._local = true;
       }
     }
     return m;
@@ -255,9 +255,11 @@ window.PaginaArbol = async function (el, [arg]) {
         const l = App.pendientes(); const x = l.find(y => y.uid === p._uid);
         if (x) {
           x.datos = { ...x.datos, ...nuevos }; if (miniatura) x.miniatura = miniatura;
-          if (x.payload) {
+          if (x.pr == null) {
             // Aún no se había enviado: se actualiza y, si el buzón está activo, se envía ahora
-            x.payload.datos = { ...x.payload.datos, ...nuevos }; if (foto) x.payload.foto = foto; Aportes._guardar(l);
+            x.datos = { ...x.datos, ...nuevos }; if (miniatura) x.miniatura = miniatura;
+            x.payload = Aportes._payload(x); x.payload.datos = { ...x.payload.datos, ...nuevos }; x.payload.autor = autor; if (foto) x.payload.foto = foto;
+            delete x.error; Aportes._guardar(l);
             dlg.close();
             if (window.CONFIG?.endpointAportes) { await enviarPendientes(); } else App.toast(t('toast.guardado'));
             dibujar(); abrir(editar); return;
@@ -288,23 +290,31 @@ window.PaginaArbol = async function (el, [arg]) {
 
   /* ---------- Cambios guardados solo en este navegador ---------- */
   function banner() {
-    const n = Aportes.sinEnviar().length; const caja = $('#migrar', el);
+    const lista = Aportes.sinEnviar(); const n = lista.length; const caja = $('#migrar', el);
     if (!n) { caja.hidden = true; return; }
     const hay = !!window.CONFIG?.endpointAportes;
+    const yo = store.get('aportar-autor', { nombre: '', relacion: '' });
+    const faltaNombre = lista.some(x => x.error === 'sin-nombre') || !yo.nombre;
+    const errores = lista.filter(x => x.error && x.error !== 'sin-nombre');
     caja.hidden = false;
     caja.innerHTML = `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <span style="flex:1;min-width:220px">💾 ${t('arbol.sinenviar').replace('{n}', n)} ${hay ? '' : t('arbol.sinenviar.nobuzon')}</span>
+      ${hay && faltaNombre ? `<input id="mig-nombre" placeholder="${esc(t('aportar.autor'))}" value="${esc(yo.nombre)}" style="font:inherit;padding:7px 12px;border-radius:10px;border:1px solid var(--linea);background:var(--papel);color:var(--tinta)">` : ''}
       ${hay ? `<button class="btn peq terra" id="mig-env">${t('arbol.sinenviar.enviar')}</button>` : ''}
-      <button class="btn peq sec" id="mig-desc">⤓ ${t('arbol.sinenviar.desc')}</button></div>`;
+      <button class="btn peq sec" id="mig-desc">⤓ ${t('arbol.sinenviar.desc')}</button>
+      <button class="btn peq sec" id="mig-desc2" title="${esc(t('arbol.sinenviar.descartar'))}">🗑</button></div>
+      ${errores.length ? `<p class="error-form" style="margin:10px 0 0">${t('aportar.error')}: ${errores.map(x => `${esc(x.datos?.nombre || x.datos?.titulo || x.objetivo || x.tipo)} — ${esc(x.error)}`).join('<br>')}</p>` : ''}`;
     $('#mig-desc').onclick = () => Aportes.descargarSinEnviar();
+    $('#mig-desc2').onclick = () => { if (confirm(t('arbol.sinenviar.descartar') + '?')) { Aportes.descartarSinEnviar(); dibujar(); } };
     const env = $('#mig-env');
     if (env) env.onclick = async () => {
-      env.disabled = true;
-      try { await Aportes.reenviar(); App.toast(t('toast.enviado')); }
-      catch (e) { App.toast(`${t('aportar.error')}: ${e.message}`); }
-      dibujar();
+      const inp = $('#mig-nombre');
+      if (inp) { if (!inp.value.trim()) { inp.focus(); App.toast(t('aportar.req')); return; } store.set('aportar-autor', { ...yo, nombre: inp.value.trim() }); }
+      env.disabled = true; env.textContent = t('aportar.enviando');
+      await enviarPendientes(); dibujar();
     };
   }
+
 
   /* ---------- Zoom y arrastre ---------- */
   function aplicarZoom() { const z = $('.arbol-zoom', el); if (z) z.style.zoom = zoom; store.set('arbol-zoom', zoom); }
@@ -356,7 +366,8 @@ window.PaginaArbol = async function (el, [arg]) {
   if (window.CONFIG?.endpointAportes && Aportes.sinEnviar().length) { await enviarPendientes(); dibujar(); }
 
   async function enviarPendientes() {
-    try { const n = await Aportes.reenviar(); if (n) App.toast(t('toast.enviado')); }
-    catch (e) { App.toast(`${t('aportar.error')}: ${e.message}`); }
+    const r = await Aportes.reenviar();
+    if (r.enviados) App.toast(t('toast.enviado'));
+    else if (r.errores.length) App.toast(t('aportar.error'));
   }
 };

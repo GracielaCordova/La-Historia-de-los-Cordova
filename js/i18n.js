@@ -417,3 +417,6 @@ Object.assign(window.I18N.en, {
 Object.assign(window.I18N.es, { "arbol.ley.local": "Guardado solo en este navegador, aún sin enviar" });
 Object.assign(window.I18N.nl, { "arbol.ley.local": "Alleen in deze browser opgeslagen, nog niet verstuurd" });
 Object.assign(window.I18N.en, { "arbol.ley.local": "Saved only in this browser, not sent yet" });
+Object.assign(window.I18N.es, { "arbol.sinenviar.descartar": "Descartar lo que no se envió" });
+Object.assign(window.I18N.nl, { "arbol.sinenviar.descartar": "Niet-verstuurde wijzigingen verwijderen" });
+Object.assign(window.I18N.en, { "arbol.sinenviar.descartar": "Discard what wasn't sent" });
