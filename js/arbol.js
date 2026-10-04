@@ -47,6 +47,7 @@ window.PaginaArbol = async function (el, [arg]) {
     }
     return m;
   }
+  Aportes.limpiarAprobados(ap, base);
   let P = construir();
   const nombre = id => P.get(id)?.nombre || id;
   const parejasDe = p => [...new Set([...(p.pareja || []), ...[...P.values()].filter(x => (x.pareja || []).includes(p.id)).map(x => x.id)])].filter(id => P.has(id));

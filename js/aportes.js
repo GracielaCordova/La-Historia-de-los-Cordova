@@ -54,6 +54,27 @@
       }
     },
     sinEnviar() { return App.pendientes().filter(x => x.pr === null && x.payload); },
+    // Quita de este navegador lo que ya fue aprobado y publicado (deja de mostrarse con ⏳)
+    limpiarAprobados(ap, familia) {
+      const tx = v => (v && typeof v === 'object') ? Object.values(v)[0] || '' : (v ?? '');
+      const igual = (a, b) => JSON.stringify(a ?? '') === JSON.stringify(b ?? '');
+      const personas = new Map([...(familia?.personas || []), ...ap.personas].map(p => [p.id, p]));
+      const publicado = x => {
+        if (x.pr === null) return false;                       // aún no enviado
+        const d = x.datos || {};
+        if (x.tipo === 'persona') return ap.personas.some(p => p.id === x.id || (p.nombre === d.nombre && igual(p.padres, d.padres)));
+        if (x.tipo === 'editar') {
+          const p = personas.get(x.objetivo); if (!p) return false;
+          return Object.entries(d).every(([k, v]) => k === 'id_sugerido' || ((k === 'rol' || k === 'bio') ? tx(p[k]) === tx(v) : igual(p[k], v)));
+        }
+        if (x.tipo === 'recuerdo') return ap.recuerdos.some(r => r.persona === d.persona && r.texto === d.texto);
+        if (x.tipo === 'foto') return ap.fotos.some(f => f.titulo === d.titulo);
+        if (x.tipo === 'lugar') return ap.lugares.some(l => l.nombre === d.nombre);
+        return false;
+      };
+      const l = App.pendientes(); const quedan = l.filter(x => !publicado(x));
+      if (quedan.length !== l.length) this._guardar(quedan);
+    },
     // Reintenta enviar todo lo guardado en este navegador
     async reenviar() {
       const l = App.pendientes(); let n = 0;
@@ -231,6 +252,7 @@
     const { $, $$, esc, t } = { ...App, t: App.t };
     const [ap, personas] = await Promise.all([App.aportes(), Aportes.personas()]);
     const nombre = id => personas.find(p => p.id === id)?.nombre || id;
+    Aportes.limpiarAprobados(ap, null);
     const pend = App.pendientes().filter(p => p.tipo === 'foto' && !ap.fotos.some(f => f.id === p.id))
       .map(p => ({ id: p.id, titulo: p.datos.titulo, descripcion: p.datos.descripcion, anio: p.datos.anio, lugar: p.datos.lugar, personas: p.datos.personas, archivo: p.miniatura, _pend: true, aportado_por: p.autor }));
     const fotos = [...ap.fotos.slice().reverse(), ...pend];
