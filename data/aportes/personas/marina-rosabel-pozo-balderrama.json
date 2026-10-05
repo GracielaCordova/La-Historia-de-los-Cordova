@@ -1,0 +1,23 @@
+{
+  "id": "marina-rosabel-pozo-balderrama",
+  "tipo": "persona",
+  "nombre": "Marina Rosabel Pozo Balderrama",
+  "apodo": "Mama Marinita",
+  "nacimiento": "1954",
+  "fallecimiento": "2025",
+  "lugar": "Totora, Cochabamba, Bolivia",
+  "padres": [],
+  "pareja": [
+    "freddy"
+  ],
+  "rol": {},
+  "bio": {},
+  "vive": true,
+  "seccion": "hoy",
+  "fuente": "familia",
+  "aportado_por": {
+    "nombre": "Chelita",
+    "relacion": "Nieta de Freddy"
+  },
+  "fecha": "2026-10-05T00:37:29.334Z"
+}
